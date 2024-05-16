@@ -8,22 +8,22 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-const API_KEY = process.env.API_KEY;
-const API_SECRET = process.env.API_SECRET;
+const CRYPTO_API_KEY = process.env.API_KEY;
+const CRYPTO_API_SECRET = process.env.API_SECRET;
 
-let userConfigs = [];
+let alertConfigurations = [];
 
-const cryptoExchangeAPIUrl = "https://api.exchange.com";
+const cryptoExchangeApiBaseUrl = "https://api.exchange.com";
 
-app.post('/register', (req, res) => {
-    const userConfig = req.body;
-    userConfigs.push(userConfig);
-    res.send({ message: 'Configuration registered successfully' });
+app.post('/registerAlertConfiguration', (req, res) => {
+    const alertConfiguration = req.body;
+    alertConfigurations.push(alertConfiguration);
+    res.send({ message: 'Alert configuration registered successfully' });
 });
 
-async function fetchCurrentPrice(symbol) {
+async function fetchCryptoCurrentPrice(symbol) {
     try {
-        const response = await axios.get(`${cryptoExchangeAPIUrl}/price?symbol=${symbol}&apikey=${API_KEY}`);
+        const response = await axios.get(`${cryptoExchangeApiBaseUrl}/price?symbol=${symbol}&apikey=${CRYPTO_API_KEY}`);
         return response.data.price; 
     } catch (error) {
         console.error('Error fetching current price:', error);
@@ -31,20 +31,20 @@ async function fetchCurrentPrice(symbol) {
     }
 }
 
-async function evaluateAlerts() {
-    userConfigs.forEach(async (config) => {
-        const { symbol, threshold, direction, email } = config;
-        const currentPrice = await fetchCurrentPrice(symbol);
+async function checkAndTriggerAlerts() {
+    alertConfigurations.forEach(async (configuration) => {
+        const { symbol, threshold, direction, email } = configuration;
+        const currentCryptoPrice = await fetchCryptoCurrentPrice(symbol);
     
-        if (currentPrice !== null) {
-            if ((direction === 'above' && currentPrice > threshold) || 
-                (direction === 'below' && currentPrice < threshold)) {
+        if (currentCryptoPrice !== null) {
+            if ((direction === 'above' && currentCryptoPrice > threshold) || 
+                (direction === 'below' && currentCryptoPrice < threshold)) {
                 console.log(`Alert triggered for ${email}: ${symbol} is ${direction} ${threshold}`);
             }
         }
     });
 }
 
-setInterval(evaluateAlerts, 60000); 
+setInterval(checkAndTriggerAlerts, 60000);
 
 app.listen(PORT, () => console.log(`Alert management server running on port ${PORT}`));
