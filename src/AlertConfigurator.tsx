@@ -35,10 +35,30 @@ const AlertConfigComponent: React.FC = () => {
   const [alertType, setAlertType] = useState<AlertType>('Price Change');
   const [threshold, setThreshold] = useState<number>(0);
   const [notificationMethod, setNotificationMethod] = useState<NotificationMethod>('Email');
+  const [error, setError] = useState<string>('');
+
+  const validateForm = () => {
+    if (threshold <= 0) {
+      setError('Threshold must be greater than zero.');
+      return false;
+    }
+    // More validation checks can be added here
+    setError('');
+    return true;
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Reset error state on each submit
+    setError('');
+
+    if (!validateForm()) {
+      console.error('Validation failed.');
+      return;
+    }
+
     console.log(`Configuring Alert: Type: ${alertType}, Threshold: ${threshold}, Notification Method: ${notificationMethod}`);
+    // If you have an API call or other asynchronous operations, you might want to include try/catch blocks here as well.
   };
 
   return (
@@ -63,6 +83,8 @@ const AlertConfigComponent: React.FC = () => {
         options={NOTIFICATION_METHODS}
         onChange={(event) => setNotificationMethod(event.target.value as NotificationMethod)}
       />
+
+      {error && <div style={{ color: 'red' }}>{error}</div>}
 
       <button type="submit">Configure Alert</button>
     </form>
