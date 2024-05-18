@@ -15,10 +15,18 @@ let alertConfigurations = [];
 
 const cryptoExchangeApiBaseUrl = "https://api.exchange.com";
 
+// Endpoint to register a new alert configuration
 app.post('/registerAlertConfiguration', (req, res) => {
     const alertConfiguration = req.body;
     alertConfigurations.push(alertConfiguration);
     res.send({ message: 'Alert configuration registered successfully' });
+});
+
+// Endpoint to remove an alert configuration
+app.post('/removeAlertConfiguration', (req, res) => {
+    const { id } = req.body; // Assuming each alert configuration has a unique 'id'
+    alertConfigurations = alertConfigurations.filter(config => config.id !== id);
+    res.send({ message: 'Alert configuration removed successfully' });
 });
 
 async function fetchCryptoCurrentPrice(symbol) {
@@ -40,6 +48,7 @@ async function checkAndTriggerAlerts() {
             if ((direction === 'above' && currentCryptoPrice > threshold) || 
                 (direction === 'below' && currentCryptoPrice < threshold)) {
                 console.log(`Alert triggered for ${email}: ${symbol} is ${direction} ${threshold}`);
+                // Here, you could also integrate emailing functionality to notify the user
             }
         }
     });
