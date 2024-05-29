@@ -1,65 +1,65 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-interface Alert {
+interface CryptoAlert {
   id: string;
   type: string;
   criteria: any;
 }
 
-const API_BASE = process.env.REACT_APP_API_URL;
+const API_ENDPOINT = process.env.REACT_APP_API_URL;
 
 const useCryptoAlerts = () => {
-  const [cryptoAlerts, setCryptoAlerts] = useState<Alert[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [alertsList, setAlertsList] = useState<CryptoAlert[]>([]);
+  const [isFetching, setIsFetching] = useState<boolean>(true);
+  const [fetchingError, setFetchingError] = useState<string | null>(null);
 
-  const handleError = (message: string, error: any) => {
-    setFetchError(message);
+  const logError = (message: string, error: any) => {
+    setFetchingError(message);
     console.error(error);
   };
 
-  const fetchData = async (fetchFunction: () => Promise<void>) => {
+  const performDataFetch = async (actionFunction: () => Promise<void>) => {
     try {
-      setFetchError(null);
-      setIsLoading(true);
-      await fetchFunction();
+      setFetchingError(null);
+      setIsFetching(true);
+      await actionFunction();
     } catch (error) {
-      handleError('An unexpected error occurred. Please try again later.', error);
+      logError('An unexpected error occurred. Please try again later.', error);
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
   };
 
-  const retrieveAlerts = async () => {
-    const response = await axios.get(`${API_BASE}/alerts`);
-    setCryptoAlerts(response.data);
+  const fetchAlerts = async () => {
+    const response = await axios.get(`${API_ENDPOINT}/alerts`);
+    setAlertsList(response.data);
   };
 
-  const createOrUpdateAlert = async (alertData: Alert) => {
-    if (alertData.id) {
-      await axios.put(`${API_BASE}/alerts/${alertData.id}`, alertData);
+  const upsertAlert = async (alertDetails: CryptoAlert) => {
+    if (alertDetails.id) {
+      await axios.put(`${API_ENDPOINT}/alerts/${alertDetails.id}`, alertDetails);
     } else {
-      await axios.post(`${API_BASE}/alerts`, alertData);
+      await axios.post(`${API_ENDPOINT}/alerts`, alertDetails);
     }
-    await retrieveAlerts();
+    await fetchAlerts();
   };
 
-  const removeAlert = async (alertId: string) => {
-    await axios.delete(`${API_BASE}/alerts/${alertId}`);
-    await retrieveAlerts();
+  const deleteAlert = async (alertId: string) => {
+    await axios.delete(`${API_ENDPOINT}/alerts/${alertId}`);
+    await fetchAlerts();
   };
 
   useEffect(() => {
-    fetchData(retrieveAlerts);
+    performDataFetch(fetchAlerts);
   }, []);
 
   return {
-    alerts: cryptoAlerts,
-    loading: isLoading,
-    error: fetchError,
-    saveAlert: (alertData: Alert) => fetchData(() => createOrUpdateAlert(alertData)),
-    deleteAlert: (alertId: string) => fetchData(() => removeAlert(alertId)),
+    alertsList,
+    isFetching,
+    fetchingError,
+    updateAlert: (alertDetails: CryptoAlert) => performDataFetch(() => upsertAlert(alertDetails)),
+    removeAlert: (alertId: string) => performDataFetch(() => deleteAlert(alertId)),
   };
 };
 
