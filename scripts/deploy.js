@@ -11,10 +11,14 @@ function executeCommand(command) {
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
-        reject(error);
+        console.error(`Error executing command: ${command}`, error);
+        reject(new Error(`Error executing command: ${error.message}`));
         return;
       }
-      resolve(stdout ? stdout : stderr);
+      if (stderr) {
+        console.warn(`Command executed with warnings: ${command}`, stderr);
+      }
+      resolve(stdout.trim());
     });
   });
 }
@@ -25,8 +29,8 @@ async function initializeServer() {
     await executeCommand("npm install");
     console.log("Server initialized successfully.");
   } catch (error) {
-    console.error("Error initializing server:", error);
-    throw error;
+    console.error("Error initializing server:", error.message);
+    throw new Error("Server initialization failed.");
   }
 }
 
@@ -37,14 +41,17 @@ async function setupDatabase() {
     console.log("Using cached database setup confirmation.");
     return;
   }
-  const dbSetupCommand = `mongo --username ${process.env.DB_USER} --password ${process.env.DB_PASS} --eval 'db.runCommand({ping: 1})'`;
+
   try {
+    const dbUser = encodeURIComponent(process.env.DB_USER);
+    const dbPass = encodeURIComponent(process.env.DB_PASS);
+    const dbSetupCommand = `mongo --username ${dbUser} --password ${dbPass} --eval 'db.runCommand({ping: 1})'`;
     await executeCommand(dbSetupCommand);
     console.log("Database setup successfully.");
     cache[cacheKey] = true; // Cache successful setup
   } catch (error) {
-    console.error("Error setting up database:", error);
-    throw error;
+    console.error("Error setting up database:", error.message);
+    throw new Error("Database setup failed.");
   }
 }
 
@@ -56,12 +63,13 @@ async function setupThirdPartyServices() {
     return;
   }
   try {
-    await executeCommand(`curl -X POST -H "Authorization: Bearer ${process.env.NOTIFICATION_SERVICE_TOKEN}" ${process.env.NOTIFICATION_SERVICE_URL}/api/setup`);
+    const setupCommand = `curl -X POST -H "Authorization: Bearer ${process.env.NOTIFICATION_SERVICE_TOKEN}" ${process.env.NOTIFICATION_SERVICE_URL}/api/setup`;
+    await executeCommand(setupCommand);
     console.log("Third-party services setup successfully.");
     cache[cacheKey] = true; // Cache successful setup
   } catch (error) {
-    console.error("Error setting up third-party services:", error);
-    throw error;
+    console.error("Error setting up third-party services:", error.message);
+    throw new Error("Third-party services setup failed.");
   }
 }
 
@@ -72,6 +80,6 @@ async function setupThirdPartyServices() {
     await setupThirdPartyServices();
     console.log("CryptoAlert deployment completed successfully.");
   } catch (error) {
-    console.error("Deployment failed:", error);
+    console.error("Deployment failed:", error.message);
   }
 })();
