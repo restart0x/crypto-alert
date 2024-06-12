@@ -1,35 +1,38 @@
-function expensiveCalculation(input: number): number {
+function doubleInput(input: number): number {
   console.log("Performing expensive calculation");
   return input * 2; 
 }
 
-const memoize = (fn: Function) => {
-  const cache = {};
-  return (...args: any[]) => {
-    const n = args[0]; 
-    if (n in cache) {
-      console.log('Fetching from cache:', n);
-      return cache[n];
-    }
-    else {
-      console.log('Calculating result:', n);
-      const result = fn(n);
-      cache[n] = result;
+const memoizeFunction = (fn: (input: number) => number) => {
+  const cache: Record<number, number> = {};
+  return (...args: number[]) => {
+    const input = args[0]; 
+    if (input in cache) {
+      console.log('Fetching from cache:', input);
+      return cache[input];
+    } else {
+      console.log('Calculating result:', input);
+      const result = fn(input);
+      cache[input] = result;
       return result;
     }
   }
 }
 
-const cachedExpensiveCalculation = memoize(expensiveCalculation);
+const memoizedDoubleInput = memoizeFunction(doubleInput);
 
 import React, { useMemo } from 'react';
 
-const MyComponent = ({ inputNumber }) => {
-  const memoizedValue = useMemo(() => expensiveCalculation(inputNumber), [inputNumber]);
+interface MyComponentProps {
+  inputNumber: number;
+}
+
+const MyComponent: React.FC<MyComponentProps> = ({ inputNumber }) => {
+  const memoizedResult = useMemo(() => memoizedDoubleInput(inputNumber), [inputNumber]);
 
   return (
     <div>
-      <p>Computed Value: {memoizedValue}</p>
+      <p>Computed Value: {memoizedResult}</p>
     </div>
   );
 };
