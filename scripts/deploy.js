@@ -4,82 +4,81 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-// Simple in-memory cache
-const cache = {};
+const setupCache = {};
 
-function executeCommand(command) {
+function executeShellCommand(shellCommand) {
   return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
+    exec(shellCommand, (error, stdout, stderr) => {
       if (error) {
-        console.error(`Error executing command: ${command}`, error);
-        reject(new Error(`Error executing command: ${error.message}`));
+        console.error(`Error executing shell command: ${shellCommand}`, error);
+        reject(new Error(`Error executing shell command: ${error.message}`));
         return;
       }
       if (stderr) {
-        console.warn(`Command executed with warnings: ${command}`, stderr);
+        console.warn(`Shell command executed with warnings: ${shellCommand}`, stderr);
       }
       resolve(stdout.trim());
     });
   });
 }
 
-async function initializeServer() {
-  console.log("Initializing server...");
+async function initializeNodeEnvironment() {
+  console.log("Initializing node environment...");
   try {
-    await executeCommand("npm install");
-    console.log("Server initialized successfully.");
+    await executeShellCommand("npm install");
+    console.log("Node environment initialized successfully.");
   } catch (error) {
-    console.error("Error initializing server:", error.message);
-    throw new Error("Server initialization failed.");
+    console.error("Error initializing node environment:", error.message);
+    throw new Error("Node environment initialization failed.");
   }
 }
 
-async function setupDatabase() {
-  console.log("Setting up database...");
-  const cacheKey = 'databaseSetup';
-  if (cache[cacheKey]) {
-    console.log("Using cached database setup confirmation.");
+async function configureDatabaseConnection() {
+  console.log("Configuring database connection...");
+  const cacheKey = 'databaseConfigured';
+  if (setupCache[cacheKey]) {
+    console.log("Using cached database configuration status.");
     return;
   }
 
   try {
-    const dbUser = encodeURIComponent(process.env.DB_USER);
-    const dbPass = encodeURIComponent(process.env.DB_PASS);
-    const dbSetupCommand = `mongo --username ${dbUser} --password ${dbPass} --eval 'db.runCommand({ping: 1})'`;
-    await executeCommand(dbSetupCommand);
-    console.log("Database setup successfully.");
-    cache[cacheKey] = true; // Cache successful setup
+    const dbUsername = encodeURIComponent(process.env.DB_USER);
+    const dbPassword = encodeURIComponent(process.env.DB_PASS);
+    const databaseConnectionCommand = `mongo --username ${dbUsername} --password ${dbPassword} --eval 'db.runCommand({ping: 1})'`;
+    await executeShellCommand(databaseConnectionCommand);
+    console.log("Database connection configured successfully.");
+    setupCache[cacheKey] = true; // Caching successful configuration
   } catch (error) {
-    console.error("Error setting up database:", error.message);
-    throw new Error("Database setup failed.");
+    console.error("Error configuring database connection:", error.message);
+    throw new Error("Database connection configuration failed.");
   }
 }
 
-async function setupThirdPartyServices() {
-  console.log("Setting up third-party services for notifications...");
-  const cacheKey = 'thirdPartyServicesSetup';
-  if (cache[cacheKey]) {
-    console.log("Using cached third-party services setup confirmation.");
+async function initializeThirdPartyNotifications() {
+  console.log("Initializing third-party notifications...");
+  const cacheKey = 'notificationsInitialized';
+  if (setupCache[cacheKey]) {
+    console.log("Using cached third-party notifications initialization status.");
     return;
   }
   try {
-    const setupCommand = `curl -X POST -H "Authorization: Bearer ${process.env.NOTIFICATION_SERVICE_TOKEN}" ${process.env.NOTIFICATION_SERVICE_URL}/api/setup`;
-    await executeCommand(setupCommand);
-    console.log("Third-party services setup successfully.");
-    cache[cacheKey] = true; // Cache successful setup
+    const notificationInitializationCommand = `curl -X POST -H "Authorization: Bearer ${process.env.NOTIFICATION_SERVICE_TOKEN}" ${process.env.NOTIFICATION_SERVICE_URL}/api/setup`;
+    await executeShellCommand(notificationInitializationCommand);
+    console.log("Third-party notifications initialized successfully.");
+    setupCache[cacheKey] = true; // Caching successful initialization
   } catch (error) {
-    console.error("Error setting up third-party services:", error.message);
-    throw new Error("Third-party services setup failed.");
+    console.error("Error initializing third-party notifications:", error.message);
+    throw new Error("Third-party notifications initialization failed.");
   }
 }
 
-(async function deployCryptoAlert() {
+(async function launchCryptoAlertSystem() {
   try {
-    await initializeServer();
-    await setupDatabase();
-    await setupThirdPartyServices();
-    console.log("CryptoAlert deployment completed successfully.");
+    await initializeNodeEnvironment();
+    await configureDatabaseConnection();
+    await initializeThirdPartyNotifications();
+    console.log("CryptoAlert system launched successfully.");
   } catch (error) {
-    console.error("Deployment failed:", error.message);
+        console.error("System launch failed:", error.message);
   }
 })();
